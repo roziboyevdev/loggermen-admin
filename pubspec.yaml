@@ -1,0 +1,47 @@
+name: watchdog
+description: >
+  A Flutter developer toolkit that streams HTTP requests, responses, BLoC
+  lifecycle events, navigation, and app logs to a browser-based DevTools page
+  in real-time.
+version: 0.6.3
+homepage: https://github.com/Boburbek6010/watchdog
+repository: https://github.com/Boburbek6010/watchdog
+issue_tracker: https://github.com/Boburbek6010/watchdog/issues
+
+topics:
+  - devtools
+  - debugging
+  - logging
+  - http-inspector
+  - developer-tools
+
+executables:
+  watchdog:
+
+environment:
+  sdk: '>=3.10.0 <4.0.0'
+  flutter: '>=3.29.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  chopper: ^8.5.1
+  dio: '>=5.0.0 <6.0.0'
+  http: '>=0.13.0 <2.0.0'
+  flutter_bloc: '>=8.1.3 <10.0.0'
+  flutter_riverpod: '>=2.4.0 <3.0.0'
+  talker: ^5.1.13
+  shelf: ^1.4.2
+  shelf_router: ^1.1.4
+  shelf_web_socket: '>=2.0.0 <4.0.0'
+  web_socket_channel: ^3.0.0
+  get_it: '>=7.6.0 <10.0.0'
+  uuid: ^4.5.3
+  geolocator: '>=13.0.0 <15.0.0'
+  permission_handler: '>=11.0.0 <13.0.2'
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
