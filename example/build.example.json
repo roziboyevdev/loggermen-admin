@@ -1,0 +1,5 @@
+{
+  "WATCHDOG_SERVER_URL": "wss://loggermen.roziboyevdev.uz",
+  "WATCHDOG_CLIENT_API_KEY": "<serverdagi .env dagi WATCHDOG_CLIENT_API_KEY>",
+  "WATCHDOG_DEVICE_ID": "watchdog-example"
+}

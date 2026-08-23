@@ -1,8 +1,41 @@
 // Minimal integration example for the Watchdog package.
+//
+// Runs in local + cloud mirror mode: events show up both on the on-device
+// DevTools page and in the watchdog-nest dashboard.
+//
+//   flutter run --dart-define-from-file=build.json
+//
+// See example/build.example.json for the values it expects.
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:watchdog/watchdog.dart';
+
+/// Base URL of the watchdog-nest server — **origin only, no path**. The package
+/// appends `/ws/app` itself, so `wss://host/watchdog` would end up requesting
+/// `wss://host/watchdog/ws/app`.
+const String kServerUrl = String.fromEnvironment(
+  'WATCHDOG_SERVER_URL',
+  defaultValue: '',
+);
+
+/// Must match `WATCHDOG_CLIENT_API_KEY` in the server's `.env`.
+const String kClientApiKey = String.fromEnvironment(
+  'WATCHDOG_CLIENT_API_KEY',
+  defaultValue: '',
+);
+
+/// Fixed so re-running the example reuses one session in the dashboard instead
+/// of creating a new row per launch (the package falls back to a random UUID
+/// when no device id is given).
+const String kDeviceId = String.fromEnvironment(
+  'WATCHDOG_DEVICE_ID',
+  defaultValue: 'watchdog-example',
+);
+
+/// Cloud is wired only when both values were supplied at build time; with an
+/// empty [kServerUrl] the example still works as a purely local demo.
+const bool kCloudEnabled = kServerUrl != '' && kClientApiKey != '';
 
 // A Dio client wired with Watchdog — every request now shows up in the
 // Network tab exactly like a Chopper one would.
@@ -15,7 +48,18 @@ Future<void> main() async {
   // Single-call start — no separate initialize() needed.
   await Watchdog.start(
     config: const WatchdogConfig(
-      apiBaseUrl: 'https://api.example.com',
+      enabled: true,
+      cloud: kCloudEnabled
+          ? WatchdogCloudConfig(
+              serverUrl: kServerUrl,
+              apiKey: kClientApiKey,
+              appName: 'watchdog-example',
+            )
+          : null,
+      device: WatchdogDevice(
+        deviceId: kDeviceId,
+        appName: 'watchdog-example',
+      ),
     ),
   );
 
@@ -48,8 +92,20 @@ class ExamplePage extends StatelessWidget {
           children: [
             const Text(
               'Open http://localhost:8888 in Chrome\n'
-                  'to see live logs and network events.',
+              'to see live logs and network events.',
               textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24),
+              child: Text(
+                kCloudEnabled
+                    ? 'Mirroring to $kServerUrl\nsession: $kDeviceId'
+                    : 'Local only — pass --dart-define-from-file=build.json\n'
+                        'to mirror events to the cloud dashboard.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(

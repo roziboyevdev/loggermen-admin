@@ -324,6 +324,33 @@ await Watchdog.initialize(
 
 ---
 
+## Running the example against the cloud server
+
+`example/` is a small app wired for **local + cloud mirror** mode: every event
+lands both on the on-device DevTools page and in the watchdog-nest dashboard.
+Handy for checking a deployment without touching a real app.
+
+```bash
+cd example
+cp build.example.json build.json     # then fill in the values
+flutter run --dart-define-from-file=build.json
+```
+
+| Key | Meaning |
+|-----|---------|
+| `WATCHDOG_SERVER_URL` | Server **origin**, no path — `wss://your-domain`. The package appends `/ws/app` itself, so `wss://host/watchdog` would become `wss://host/watchdog/ws/app` |
+| `WATCHDOG_CLIENT_API_KEY` | Must match `WATCHDOG_CLIENT_API_KEY` in the server's `.env` |
+| `WATCHDOG_DEVICE_ID` | Optional. Fixed so re-running reuses one session instead of creating a row per launch |
+
+`build.json` is gitignored — it holds the client key. `build.example.json` is
+the committed template.
+
+Without the flag the example still runs, local-only; the screen says which mode
+it is in. On a real device use the machine's LAN address (`ws://192.168.1.50:8080`),
+not `localhost`, which is the phone itself.
+
+---
+
 ## Advanced
 
 <details>

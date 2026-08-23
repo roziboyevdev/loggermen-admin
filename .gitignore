@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Build-time konfiguratsiya (--dart-define-from-file). Ichida Watchdog client
+# API kaliti bor va bu repo public — commit qilinmasin. Shablon:
+# example/build.example.json
+example/build.json
