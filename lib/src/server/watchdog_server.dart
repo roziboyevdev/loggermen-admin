@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:shelf/shelf.dart';
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_router/shelf_router.dart';
@@ -43,6 +44,11 @@ class WatchdogServer {
 
   /// Starts the server. Prints the DevTools URL to the console.
   Future<void> start() async {
+    if (kIsWeb) {
+      // Web browsers cannot open a raw local socket, so the embedded DevTools
+      // server is intentionally disabled there. Cloud-based streaming still works.
+      return;
+    }
     if (_server != null) return; // already running
 
     final router = Router()
@@ -67,6 +73,10 @@ class WatchdogServer {
 
   /// Stops the server gracefully.
   Future<void> stop() async {
+    if (kIsWeb) {
+      _server = null;
+      return;
+    }
     await _server?.close(force: false);
     _server = null;
   }

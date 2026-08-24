@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:uuid/uuid.dart';
@@ -143,7 +144,9 @@ class WatchdogRuntime {
       );
     } else {
       // ── Local mode (+ optional cloud) ────────────────────────────────────
-      await server.start();
+      if (!kIsWeb) {
+        await server.start();
+      }
       if (cloud != null) {
         _connectCloud(cloud, deviceInfo);
         await _cloudClient!.connect();

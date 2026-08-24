@@ -33,9 +33,27 @@ const String kDeviceId = String.fromEnvironment(
   defaultValue: 'watchdog-example',
 );
 
-/// Cloud is wired only when both values were supplied at build time; with an
-/// empty [kServerUrl] the example still works as a purely local demo.
+/// Cloud is wired only when both values were supplied at build time; without
+/// them the example still works as a purely local demo.
 const bool kCloudEnabled = kServerUrl != '' && kClientApiKey != '';
+
+/// True when [url] is something `WatchdogCloudClient` can actually dial.
+///
+/// Without this a bad `--dart-define` (an empty string, a pasted Dart VM
+/// service URL, a plain host with no scheme) is only discovered as an endless
+/// "Connection refused" retry loop against an address nobody intended.
+bool isValidWatchdogServerUrl(String url) {
+  final trimmed = url.trim();
+  if (trimmed.isEmpty) return false;
+  final uri = Uri.tryParse(trimmed);
+  if (uri == null) return false;
+  if (uri.scheme != 'ws' && uri.scheme != 'wss') return false;
+  if (uri.host.isEmpty) return false;
+  // The package appends "/ws/app" itself; a path here produces
+  // ".../whatever/ws/app" and silently never connects.
+  if (uri.path.isNotEmpty && uri.path != '/') return false;
+  return true;
+}
 
 // A Dio client wired with Watchdog — every request now shows up in the
 // Network tab exactly like a Chopper one would.
@@ -45,18 +63,31 @@ final dio = Dio(BaseOptions(baseUrl: 'https://jsonplaceholder.typicode.com'))
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  final cloudReady = kCloudEnabled && isValidWatchdogServerUrl(kServerUrl);
+  if (kCloudEnabled && !cloudReady) {
+    debugPrint(
+      '[Watchdog] Ignoring WATCHDOG_SERVER_URL="$kServerUrl" - it must be an '
+      'origin such as wss://host (no path). Running local-only.',
+    );
+  } else if (!kCloudEnabled) {
+    debugPrint(
+      '[Watchdog] Local-only: pass --dart-define-from-file=build.json to '
+      'mirror events to the cloud dashboard.',
+    );
+  }
+
   // Single-call start — no separate initialize() needed.
   await Watchdog.start(
-    config: const WatchdogConfig(
+    config: WatchdogConfig(
       enabled: true,
-      cloud: kCloudEnabled
-          ? WatchdogCloudConfig(
+      cloud: cloudReady
+          ? const WatchdogCloudConfig(
               serverUrl: kServerUrl,
               apiKey: kClientApiKey,
               appName: 'watchdog-example',
             )
           : null,
-      device: WatchdogDevice(
+      device: const WatchdogDevice(
         deviceId: kDeviceId,
         appName: 'watchdog-example',
       ),
@@ -96,15 +127,15 @@ class ExamplePage extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 8),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                kCloudEnabled
+                kCloudEnabled && isValidWatchdogServerUrl(kServerUrl)
                     ? 'Mirroring to $kServerUrl\nsession: $kDeviceId'
                     : 'Local only — pass --dart-define-from-file=build.json\n'
                         'to mirror events to the cloud dashboard.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
             ),
             const SizedBox(height: 24),
