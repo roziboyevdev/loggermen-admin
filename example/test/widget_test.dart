@@ -23,6 +23,30 @@ void main() {
     });
   });
 
+  group('isValidWatchdogClientKey', () {
+    test('accepts a real key', () {
+      expect(
+        isValidWatchdogClientKey('f0e44ef9c41ee0bdc943c9a0cc4b959de60a50299f45bfa1'),
+        isTrue,
+      );
+    });
+
+    test('rejects placeholders that are merely non-empty', () {
+      expect(isValidWatchdogClientKey(''), isFalse);
+      expect(isValidWatchdogClientKey('   '), isFalse);
+      // The server template's own value.
+      expect(isValidWatchdogClientKey('change-client-key'), isFalse);
+      // build.example.json ships this marker.
+      expect(isValidWatchdogClientKey('<serverdagi .env dagi key>'), isFalse);
+    });
+  });
+
+  test('a localhost fallback would have passed the shape check', () {
+    // Why the defaults are empty rather than "helpful": this URL is valid, so
+    // only an empty default keeps a define-less build from dialling the phone.
+    expect(isValidWatchdogServerUrl('ws://localhost:8080'), isTrue);
+  });
+
   testWidgets('example renders its actions', (WidgetTester tester) async {
     await tester.pumpWidget(const ExampleApp());
 

@@ -37,6 +37,19 @@ const String kDeviceId = String.fromEnvironment(
 /// them the example still works as a purely local demo.
 const bool kCloudEnabled = kServerUrl != '' && kClientApiKey != '';
 
+/// True when [key] looks like a real key rather than an unedited placeholder.
+///
+/// `build.example.json` ships a `<...>` marker and the server's own template
+/// uses `change-client-key`. Both are non-empty, so an emptiness check alone
+/// lets them through — and the server then rejects every reconnect forever.
+bool isValidWatchdogClientKey(String key) {
+  final trimmed = key.trim();
+  if (trimmed.isEmpty) return false;
+  if (trimmed.startsWith('<') || trimmed.endsWith('>')) return false;
+  return !trimmed.startsWith('change-');
+}
+
+
 /// True when [url] is something `WatchdogCloudClient` can actually dial.
 ///
 /// Without this a bad `--dart-define` (an empty string, a pasted Dart VM
@@ -63,11 +76,13 @@ final dio = Dio(BaseOptions(baseUrl: 'https://jsonplaceholder.typicode.com'))
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  final cloudReady = kCloudEnabled && isValidWatchdogServerUrl(kServerUrl);
+  final cloudReady = isValidWatchdogServerUrl(kServerUrl) &&
+      isValidWatchdogClientKey(kClientApiKey);
   if (kCloudEnabled && !cloudReady) {
     debugPrint(
       '[Watchdog] Ignoring WATCHDOG_SERVER_URL="$kServerUrl" - it must be an '
-      'origin such as wss://host (no path). Running local-only.',
+      'origin such as wss://host (no path), with a real client key. '
+      'Running local-only.',
     );
   } else if (!kCloudEnabled) {
     debugPrint(
@@ -130,7 +145,8 @@ class ExamplePage extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Text(
-                kCloudEnabled && isValidWatchdogServerUrl(kServerUrl)
+                isValidWatchdogServerUrl(kServerUrl) &&
+                        isValidWatchdogClientKey(kClientApiKey)
                     ? 'Mirroring to $kServerUrl\nsession: $kDeviceId'
                     : 'Local only — pass --dart-define-from-file=build.json\n'
                         'to mirror events to the cloud dashboard.',
